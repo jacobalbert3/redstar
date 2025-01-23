@@ -11,7 +11,6 @@ jobs:
   test:
     #runs the job on the latest ubuntu virtual environment: 
     runs-on: ubuntu-latest
-    
   #runs isolated services on top of the ubuntu environment:
     services:
       #pulls the postgres image from docker hub
