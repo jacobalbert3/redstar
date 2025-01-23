@@ -1,0 +1,119 @@
+.tracking-control-panel {
+  background: rgba(16, 20, 24, 0.95);
+  border: 1px solid rgba(0, 235, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  width: 360px;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 30px rgba(0, 235, 255, 0.1);
+}
+
+.tracking-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(0, 235, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tracking-title {
+  margin-bottom: 15px;
+}
+
+.tracking-title h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: rgba(0, 235, 255, 0.9);
+  font-weight: 500;
+}
+
+.tracking-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff4444;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.status-indicator.active {
+  background: #00ebff;
+}
+
+.status-indicator.active .pulse-ring {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  background: rgba(0, 235, 255, 0.5);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.control-button {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 235, 255, 0.1);
+  border: 1px solid rgba(0, 235, 255, 0.2);
+  color: rgba(0, 235, 255, 0.9);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.control-button:hover {
+  background: rgba(0, 235, 255, 0.15);
+  border-color: rgba(0, 235, 255, 0.3);
+}
+
+.control-button.active {
+  background: rgba(0, 235, 255, 0.2);
+  border-color: rgba(0, 235, 255, 0.4);
+}
+
+.tracking-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.stat-box {
+  background: rgba(0, 235, 255, 0.05);
+  border: 1px solid rgba(0, 235, 255, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: rgba(0, 235, 255, 0.7);
+  margin-bottom: 5px;
+} 

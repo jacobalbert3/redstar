@@ -1,0 +1,184 @@
+name: CI/CD Pipeline
+
+#Defines when the pipeline will run:
+on:
+  push:
+    branches: [ clean-start ]
+  pull_request:
+    branches: [ clean-start ]
+
+jobs:
+  test:
+    #runs the job on the latest ubuntu virtual environment: 
+    runs-on: ubuntu-latest
+    
+  #runs isolated services on top of the ubuntu environment:
+    services:
+      #pulls the postgres image from docker hub
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_USER: test #username for the db
+          POSTGRES_PASSWORD: test #password for the db
+          POSTGRES_DB: test_db #name of the db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    #clones the repository into the ubuntu environment
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install
+    
+    - name: Initialize Test Database
+      env:
+        NODE_ENV: test
+        PGUSER: test
+        PGPASSWORD: test
+        PGDATABASE: test_db
+        PGHOST: localhost
+        PGPORT: 5432
+        JWT_SECRET: test_secret
+      run: node src/db/init.cjs  # Just use the existing init script
+
+    - name: Start Development Server
+      env:
+        NODE_ENV: test
+        PGUSER: test
+        PGPASSWORD: test
+        PGDATABASE: test_db
+        PGHOST: localhost
+        PGPORT: 5432
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+        JWT_SECRET: test_secret
+      run: |
+        npm run dev &
+        echo $! > server.pid
+        sleep 15
+      
+    - name: Run Basic Test
+      env:
+        NODE_ENV: test
+        PGUSER: test
+        PGPASSWORD: test
+        PGDATABASE: test_db
+        PGHOST: localhost
+        PGPORT: 5432
+        JWT_SECRET: test_secret
+      run: |
+        # Debug info
+        echo "Checking PostgreSQL status..."
+        pg_isready -h localhost -p 5432
+        echo "Checking database..."
+        psql -h localhost -U test -d test_db -c "\dt"
+        # Run tests
+        npm test
+      
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ -f server.pid ]; then
+          kill $(cat server.pid) || true
+          rm server.pid
+        fi
+
+#second job - deploy to heroku
+  deploy:
+  #depends on the successful completion of the test job
+    needs: test
+    runs-on: ubuntu-latest
+    #Check if the workflow was triggered by a commit or event on the branch named clean-start.
+    if: github.ref == 'refs/heads/clean-start'
+    
+    steps:
+    #clones the repository into the runner
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    #sets up the node version on the runner
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    #performs a clean install of dependences based on package-lock.json
+    - name: Install Dependencies
+      run: npm ci
+    - name: Build Application
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Install Heroku CLI
+      run: |
+        curl https://cli-assets.heroku.com/install.sh | sh
+      #uses secret keys stored in the repository to authenticate. 
+    - name: Login to Heroku
+      uses: akhileshns/heroku-deploy@v3.12.14
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "reds"
+        heroku_email: ${{ secrets.HEROKU_EMAIL }}
+        justlogin: true
+
+  #pushes the clean-start branch to the main branch of the heroku app
+    - name: Deploy to Heroku
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: |
+        git config --global user.email "${{ secrets.HEROKU_EMAIL }}"
+        git config --global user.name "GitHub Actions"
+        heroku git:remote -a reds
+        git push heroku clean-start:main -f
+      
+  e2e-test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    #clones the repository into the runner
+    - uses: actions/checkout@v2
+    
+    #installs the project dependencie
+    - name: Install Dependencies
+      run: npm install
+      
+    - name: Wait for Heroku Deploy
+      run: |
+        # Give Heroku time to complete deployment and start
+        sleep 60  # Increase from 30 to 60 seconds
+        
+    - name: Cypress run
+      uses: cypress-io/github-action@v6
+      env:
+        CYPRESS_MAPBOX_TOKEN: ${{ secrets.REACT_APP_MAPBOX_API_KEY }}
+      with:
+        browser: chrome
+        headed: false
+        install: true
+        wait-on: 'https://reds-332d72840274.herokuapp.com'
+        wait-on-timeout: 120
