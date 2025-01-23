@@ -3,9 +3,9 @@ name: CI/CD Pipeline
 #Defines when the pipeline will run:
 on:
   push:
-    branches: [ clean-start ]
+    branches: [ clean-start, master ]
   pull_request:
-    branches: [ clean-start ]
+    branches: [ clean-start, master ]
 
 jobs:
   test:
@@ -111,8 +111,8 @@ jobs:
   #depends on the successful completion of the test job
     needs: test
     runs-on: ubuntu-latest
-    #Check if the workflow was triggered by a commit or event on the branch named clean-start.
-    if: github.ref == 'refs/heads/clean-start'
+    #Change this condition to include master branch
+    if: github.ref == 'refs/heads/clean-start' || github.ref == 'refs/heads/master'
     
     steps:
     #clones the repository into the runner
@@ -136,7 +136,7 @@ jobs:
     - name: Install Heroku CLI
       run: |
         curl https://cli-assets.heroku.com/install.sh | sh
-      #uses secret keys stored in the repository to authenticate. 
+    #uses secret keys stored in the repository to authenticate. 
     - name: Login to Heroku
       uses: akhileshns/heroku-deploy@v3.12.14
       with:
@@ -145,7 +145,7 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL }}
         justlogin: true
 
-  #pushes the clean-start branch to the main branch of the heroku app
+    # Modify the deploy step to handle both branches
     - name: Deploy to Heroku
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -153,8 +153,12 @@ jobs:
         git config --global user.email "${{ secrets.HEROKU_EMAIL }}"
         git config --global user.name "GitHub Actions"
         heroku git:remote -a reds
-        git push heroku clean-start:main -f
-      
+        if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+          git push heroku master:main -f
+        else
+          git push heroku clean-start:main -f
+        fi
+
   e2e-test:
     needs: deploy
     runs-on: ubuntu-latest
