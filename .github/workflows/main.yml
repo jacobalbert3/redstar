@@ -6,6 +6,7 @@ on:
     branches: [ clean-start, master ]
   pull_request:
     branches: [ clean-start, master ]
+
 jobs:
   test:
     #runs the job on the latest ubuntu virtual environment: 
