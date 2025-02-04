@@ -1,6 +1,4 @@
 # 🚨 **Redstar** 🚨  
-**Stay Aware. Stay Safe.**  
-
 Redstar is a real-time crime tracking and location-sharing app designed to help users stay informed about recent incidents in their area.
 
 ---
@@ -24,17 +22,3 @@ Redstar is a real-time crime tracking and location-sharing app designed to help 
 ## 🌐 **Try Redstar**  
 🚧 **Currently Offline!!** 🚧  
 🔗 **Redstar Web App:** [Redstar](https://reds-332d72840274.herokuapp.com/)  
-
-💡 *Stay tuned for updates as we work to bring Redstar back online!*  
-
----
-
-## 🛠️ **Installation & Setup**  
-
-To run Redstar locally, follow these steps:  
-
-```sh
-git clone https://github.com/yourusername/redstar.git
-cd redstar
-npm install  # or pip install -r requirements.txt (depending on your stack)
-npm start    # or python app.py
